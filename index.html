@@ -234,6 +234,29 @@ input[type=range]:focus{box-shadow:none}
 .tester{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--brand-soft);border-radius:12px;padding:10px 12px;margin-top:10px}
 .tester .uf{width:150px}
 @media (max-width:700px){.wrow{grid-template-columns:1fr;gap:6px}.tgt .eff{margin-left:0}}
+
+.aekpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;position:relative;z-index:1;margin-top:6px}
+.aek{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:11px 14px;backdrop-filter:blur(6px);display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.aek span{font-size:11.5px;opacity:.88}.aek b{font-size:20px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#fff}
+.aesplit{display:grid;grid-template-columns:minmax(230px,.8fr) 2fr;gap:14px;margin-bottom:16px}.aesplit>.card{margin-bottom:0}
+@media (max-width:900px){.aesplit{grid-template-columns:1fr}}
+.aeplat{border-top:4px solid var(--c,var(--brand))}
+.aeplat .big{font-size:24px;font-weight:700;letter-spacing:-.02em;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.aemet{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px 14px;margin-top:10px}
+.aemet span{display:block;font-size:11.5px;color:var(--muted)}.aemet b{font-size:13.5px;font-variant-numeric:tabular-nums}
+.calcrow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.calcrow span{background:var(--brand-soft);border-radius:10px;padding:6px 11px;font-size:12px}.calcrow b{font-variant-numeric:tabular-nums}
+.pills{display:inline-flex;gap:3px;padding:4px;border-radius:13px;background:var(--brand-soft)}
+.pills button{border:0;background:transparent;box-shadow:none;padding:6px 14px;border-radius:10px;font-weight:600;color:var(--muted)}
+.pills button.on{background:var(--panel);color:var(--brand);box-shadow:var(--shadow)}
+button.lg{display:inline-flex;gap:6px;align-items:center;font-size:12px;padding:3px 10px;border-radius:999px;background:var(--panel)}
+button.lg i{width:10px;height:10px;border-radius:3px;background:var(--c);display:inline-block}
+button.lg.off{opacity:.45;text-decoration:line-through}
+.col{display:flex;flex-direction:column}.sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+a.btnlike{display:inline-flex;align-items:center;padding:8px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-decoration:none;font-weight:500}
+a.btnlike.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-color:transparent;font-weight:600}
+textarea{width:100%;resize:vertical}
+.aeflt input,.aeflt select{width:auto;min-width:0}.aeflt .row{align-items:center}.aeflt button.sm{align-self:center}
+.aeplats{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:14px;margin-bottom:16px}.aeplats>.card{margin-bottom:0}
 </style>
 </head>
 <body>
@@ -288,7 +311,7 @@ function download(name, text, mime) {
 function csv(rows) { return '﻿' + rows.map(r => r.map(c => { c = c == null ? '' : String(c); return /[",;\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(';')).join('\n'); }
 
 /* ---------- state ---------- */
-const defState = () => ({ v: 1, mode: 'atasan', employees: [], params: {}, metrics: [], deliv: [], osd: [], hl: { sessions: [], checklist: [], coaching: [] }, ui: {} });
+const defState = () => ({ v: 1, mode: 'atasan', employees: [], params: {}, metrics: [], deliv: [], ae: [], cm: [], osd: [], hl: { sessions: [], checklist: [], coaching: [] }, ui: {} });
 let mem = null;
 function load() {
   try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && s.v === 1) return Object.assign(defState(), s); } catch (e) { }
@@ -711,6 +734,8 @@ function loadDemo() {
       for (let k = 2; k >= 0; k--) { const dt = new Date(d.getFullYear(), d.getMonth() - k, 1); state.osd.push({ id: uid(), month: dt.getFullYear() + '-' + pad(dt.getMonth() + 1), salary: 50000000, gmvA: 1050e6 - k * 30e6, gmvT: 1000e6, ceiA: 102, ceiT: 100, eng: [450e6, 430e6, 300e6, 320e6, 300e6, 250e6], gm: 1050e6 - k * 30e6, g3: 980e6, camp: ['Selesai Tepat Waktu', 'Selesai Tepat Waktu', 'Selesai Tepat Waktu', 'Selesai Terlambat', 'Selesai Tepat Waktu', 'Selesai Terlambat'], store: ['Pass', 'Pass', 'Pass', 'Pass', k ? 'Pass' : 'Fail'], link: '' }); }
     }
   }
+  aeDemo();
+  ROLES.filter(isCM).forEach(r => { CMR = r; cmDemo(); });
   save();
 }
 function pageData() {
@@ -723,7 +748,7 @@ function pageData() {
       h('button', { onclick: () => fileI.click() }, 'Pulihkan dari backup'), fileI,
       h('button', { onclick: () => { loadDemo(); toast('Data contoh dimuat'); rerender(); } }, 'Muat data contoh'),
       h('button', { class: 'danger', onclick: () => { if (confirm('Hapus SEMUA data? Tindakan ini tidak bisa dibatalkan (unduh backup dulu).')) { state = defState(); save(); rerender(); } } }, 'Hapus semua data'))));
-  const counts = [['Karyawan', state.employees.length], ['Log metrik', state.metrics.length], ['Log deliverable', state.deliv.length], ['Input bulanan OSD', state.osd.length], ['Sesi Live', state.hl.sessions.length], ['Checklist Host', state.hl.checklist.length], ['Coaching', state.hl.coaching.length]];
+  const counts = [['Karyawan', state.employees.length], ['Log metrik', state.metrics.length], ['Log deliverable', state.deliv.length], ['Input bulanan OSD', state.osd.length], ['Sesi Live', state.hl.sessions.length], ['Checklist Host', state.hl.checklist.length], ['Coaching', state.hl.coaching.length], ['Input harian AE (hari)', state.ae.length], ['Input harian Creator Community (hari)', state.cm.length]];
   box.append(h('div', { class: 'card' }, h('h3', {}, 'Ringkasan data'), tbl(['Jenis', { t: 'Jumlah baris', num: 1 }], counts.map(c => h('tr', {}, td(c[0]), td(c[1], 'num'))))));
   box.append(h('div', { class: 'card' }, h('h3', {}, 'Ekspor CSV'),
     h('div', { class: 'row' },
@@ -731,6 +756,587 @@ function pageData() {
       h('button', { onclick: () => download('log-deliverable.csv', csv([['Peran', 'Nama', 'Tag KPI', 'Deliverable', 'Periode', 'Deadline', 'Selesai', 'Status', 'Link', 'Verifikasi', 'Catatan'], ...state.deliv.map(m => [roleById(m.roleId).tab, m.name, m.tag, m.title, m.periode, m.deadline, m.done, delivStatus(m), m.link, m.verif, m.note])]), 'text/csv') }, 'Log deliverable'),
       h('button', { onclick: () => download('sesi-live.csv', csv([['Tanggal', 'Host', 'Platform', 'Jadwal mulai', 'Jadwal selesai', 'Masuk', 'Selesai', 'Target GMV', 'Net GMV', 'Verifikasi'], ...state.hl.sessions.map(s => [s.date, s.host, s.platform, s.sStart, s.sEnd, s.aStart, s.aEnd, s.tGmv, s.aGmv, s.verif])]), 'text/csv') }, 'Sesi Live'))));
   return box;
+}
+
+/* ---------- Account Executive: input harian & dashboard performa ---------- */
+const isAE = role => role.tab === 'Account Executive';
+function tabsOf(role) {
+  const t = TABS[role.type].slice();
+  if (isAE(role) || isCM(role)) t.splice(2, 0, ['dash', 'Dashboard Performa'], ['harian', 'Input Harian']);
+  return t;
+}
+const AE_PAGES = { harian: role => isCM(role) ? pageCmInput(role) : pageAeInput(role), dash: role => isCM(role) ? pageCmDash(role) : pageAeDash(role) };
+const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const pd = s => new Date(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10));
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const daysBetween = (a, b) => Math.round((pd(b) - pd(a)) / 864e5) + 1;
+const addMonth = (ym, n) => { const d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+const fmtLong = s => { const d = pd(s); return d.getDate() + ' ' + MONTHS[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear(); };
+const weekOf = s => Math.min(4, Math.ceil(+s.slice(8, 10) / 7));
+const rpC = n => n == null ? '–' : Math.abs(n) >= 1e9 ? 'Rp ' + nf(n / 1e9, 2) + ' M' : Math.abs(n) >= 1e6 ? 'Rp ' + nf(n / 1e6, 1) + ' jt' : rp(n);
+const yFmt = n => n >= 1e9 ? nf(n / 1e9, 1) + ' M' : n >= 1e6 ? nf(n / 1e6, n >= 1e7 ? 0 : 1) + ' jt' : n >= 1e3 ? nf(n / 1e3, 0) + ' rb' : nf(n, 0);
+
+/* platform & kolom sesuai sheet Tabel_Input */
+const AEP = [
+  { k: 'tt', name: 'TikTok Shop', color: '#06b6d4', gmv: ['live', 'video', 'aff', 'shop'], cvrBy: 'pv',
+    f: [['live', 'Live Stream GMV', 'rp'], ['video', 'Video GMV', 'rp'], ['aff', 'Affiliate GMV', 'rp'], ['shop', 'Shop GMV', 'rp'], ['orders', 'Jumlah pesanan', 'int'], ['sold', 'Product Sold', 'int'], ['ro', 'Customers – RO', 'int'], ['new', 'Customers – New', 'int'], ['pv', 'Page Views', 'int'], ['vis', 'Visitors', 'int'], ['score', 'Shop Score', 'dec'], ['viol', 'Shop Violations', 'int'], ['lvViol', 'Live / Video Violations', 'int']] },
+  { k: 'sp', name: 'Shopee', color: '#f97316', gmv: ['live', 'aff', 'video', 'shop'], cvrBy: 'pv',
+    f: [['live', 'Live Stream GMV', 'rp'], ['aff', 'Affiliate GMV', 'rp'], ['video', 'GMV Video', 'rp'], ['shop', 'Shop GMV', 'rp'], ['orders', 'Orders', 'int'], ['sold', 'Product Sold', 'int'], ['ro', 'Customers – RO', 'int'], ['new', 'Customers – New', 'int'], ['vis', 'Visitor', 'int'], ['pv', 'Page Views', 'int'], ['score', 'Shopee Score', 'dec'], ['viol', 'Shop Violations', 'int'], ['lvViol', 'Live / Video Violations', 'int']] },
+  { k: 'lz', name: 'Lazada', color: '#6366f1', gmv: ['shop'], cvrBy: 'vis',
+    f: [['shop', 'Shop GMV (= Total GMV)', 'rp'], ['orders', 'Total Pesanan', 'int'], ['sold', 'Product Sold', 'int'], ['ro', 'Customers – RO', 'int'], ['new', 'Customers – New', 'int'], ['pv', 'Page View', 'int'], ['vis', 'Visitor', 'int'], ['score', 'Lazada Score', 'dec'], ['viol', 'Shop Violations', 'int']] },
+];
+const aeGmv = (p, d) => p.gmv.reduce((a, x) => a + N(d[x]), 0);
+const aeRecs = (from, to, name) => state.ae.filter(r => r.date >= from && r.date <= to && (!name || r.name === name));
+function aePlat(recs, p) {
+  const a = { gmv: 0, shop: 0, orders: 0, sold: 0, ro: 0, nw: 0, pv: 0, vis: 0, viol: 0, lvViol: 0, sS: 0, sN: 0, days: 0 };
+  for (const r of recs) {
+    const d = r[p.k]; if (!d) continue;
+    const g = aeGmv(p, d); a.gmv += g; a.shop += N(d.shop); a.orders += N(d.orders); a.sold += N(d.sold); a.ro += N(d.ro); a.nw += N(d.new); a.pv += N(d.pv); a.vis += N(d.vis); a.viol += N(d.viol); a.lvViol += N(d.lvViol);
+    if (d.score != null) { a.sS += d.score; a.sN++; }
+    if (g || d.orders) a.days++;
+  }
+  a.score = a.sN ? a.sS / a.sN : null; a.aov = a.orders ? a.gmv / a.orders : null;
+  const den = p.cvrBy === 'vis' ? a.vis : a.pv; a.cvr = den ? a.orders / den : null;
+  a.roPct = (a.ro + a.nw) ? a.ro / (a.ro + a.nw) : null;
+  return a;
+}
+function aeAll(recs) {
+  const per = {}; let gmv = 0, orders = 0, sold = 0;
+  for (const p of AEP) { per[p.k] = aePlat(recs, p); gmv += per[p.k].gmv; orders += per[p.k].orders; sold += per[p.k].sold; }
+  const dates = new Set(recs.filter(r => AEP.some(p => { const d = r[p.k]; return d && (aeGmv(p, d) || d.orders); })).map(r => r.date));
+  return { per, gmv, orders, sold, aov: orders ? gmv / orders : null, days: dates.size };
+}
+
+/* ----- filter periode ----- */
+function aeFilter(key = 'ae', list = state.ae) {
+  const u = state.ui;
+  if (!u[key]) { const last = list.map(r => r.date).sort().pop() || today(); u[key] = { mode: 'bulan', date: last, month: last.slice(0, 7), week: weekOf(last), from: monthStart(pd(last)), to: last, cmp: true, name: '' }; }
+  return u[key];
+}
+function aeRange(f) {
+  if (f.mode === 'hari') return { from: f.date, to: f.date, label: fmtLong(f.date) };
+  if (f.mode === 'minggu') {
+    const y = +f.month.slice(0, 4), m = +f.month.slice(5, 7), last = new Date(y, m, 0).getDate(), w = f.week;
+    const s = (w - 1) * 7 + 1, e = w === 4 ? last : w * 7;
+    return { from: `${f.month}-${pad(s)}`, to: `${f.month}-${pad(Math.min(e, last))}`, label: `Week ${w} · ${MONTHS[m - 1]} ${y}` };
+  }
+  if (f.mode === 'bulan') {
+    const y = +f.month.slice(0, 4), m = +f.month.slice(5, 7);
+    return { from: `${f.month}-01`, to: `${f.month}-${pad(new Date(y, m, 0).getDate())}`, label: `${MONTHS[m - 1]} ${y}` };
+  }
+  const a = f.from <= f.to ? f.from : f.to, b = f.from <= f.to ? f.to : f.from;
+  return { from: a, to: b, label: fmtLong(a) + ' – ' + fmtLong(b) };
+}
+function aeShift(f, dir) {
+  if (f.mode === 'hari') f.date = iso(addDays(pd(f.date), dir));
+  else if (f.mode === 'minggu') { let w = f.week + dir, m = f.month; if (w < 1) { w = 4; m = addMonth(m, -1); } if (w > 4) { w = 1; m = addMonth(m, 1); } f.week = w; f.month = m; }
+  else if (f.mode === 'bulan') f.month = addMonth(f.month, dir);
+  else { const n = daysBetween(f.from, f.to); f.from = iso(addDays(pd(f.from), dir * n)); f.to = iso(addDays(pd(f.to), dir * n)); }
+}
+function aePrevRange(f) { const c = clone(f); aeShift(c, -1); return aeRange(c); }
+function aeBuckets(from, to) {
+  if (to > today() && from <= today()) to = today();
+  const d0 = pd(from), days = daysBetween(from, to), out = [];
+  const lab = s => s.slice(8) + '/' + s.slice(5, 7);
+  if (days <= 62) { for (let i = 0; i < days; i++) { const s = iso(addDays(d0, i)); out.push({ l: lab(s), f: s, t: s, hint: fmtLong(s) }); } }
+  else if (days <= 200) { for (let i = 0; i < days; i += 7) { const f = iso(addDays(d0, i)), t = iso(addDays(d0, Math.min(days - 1, i + 6))); out.push({ l: lab(f), f, t, hint: fmtLong(f) + ' – ' + fmtLong(t) }); } }
+  else { let ym = from.slice(0, 7); while (ym <= to.slice(0, 7)) { const y = +ym.slice(0, 4), m = +ym.slice(5, 7); out.push({ l: MONTHS[m - 1].slice(0, 3) + ' ' + String(y).slice(2), f: ym + '-01', t: ym + '-' + pad(new Date(y, m, 0).getDate()), hint: MONTHS[m - 1] + ' ' + y }); ym = addMonth(ym, 1); } }
+  return out;
+}
+
+/* ----- grafik ----- */
+function niceMax(v) { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))), m = v / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
+function aeLineSvg(buckets, series) {
+  const W = 720, H = 250, L = 58, R = 14, T = 14, B = 30, n = buckets.length;
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Grafik tren GMV' });
+  const max = niceMax(Math.max(1, ...series.flatMap(x => x.vals)));
+  const xs = i => L + (W - L - R) * (n <= 1 ? .5 : i / (n - 1)), ys = v => T + (H - T - B) * (1 - v / max);
+  for (let i = 0; i <= 4; i++) { const v = max * i / 4; s.append(svg('line', { x1: L, x2: W - R, y1: ys(v), y2: ys(v), stroke: 'var(--line)' }), svg('text', { x: L - 6, y: ys(v) + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11 }, yFmt(v))); }
+  const every = Math.ceil(n / 10);
+  buckets.forEach((b, i) => { if (i % every === 0) s.append(svg('text', { x: xs(i), y: H - 10, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 11 }, b.l)); });
+  series.forEach(se => {
+    let d = ''; se.vals.forEach((v, i) => { d += (i ? 'L' : 'M') + xs(i).toFixed(1) + ' ' + ys(v).toFixed(1) + ' '; });
+    if (se.area && n > 1) s.append(svg('path', { d: d + `L${xs(n - 1).toFixed(1)} ${ys(0)} L${xs(0).toFixed(1)} ${ys(0)} Z`, fill: se.color, opacity: .12 }));
+    if (n > 1) s.append(svg('path', { d, fill: 'none', stroke: se.color, 'stroke-width': se.area ? 2.8 : 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', pathLength: 1, class: 'draw' }));
+    if (n <= 31) se.vals.forEach((v, i) => s.append(svg('circle', { cx: xs(i), cy: ys(v), r: n === 1 ? 5 : 3, fill: se.color })));
+  });
+  const cw = (W - L - R) / Math.max(1, n);
+  buckets.forEach((b, i) => s.append(svg('rect', { x: xs(i) - cw / 2, y: T, width: cw, height: H - T - B, fill: 'transparent' }, svg('title', {}, b.hint + '\n' + series.map(se => se.name + ': ' + (se.fmt || rp)(se.vals[i])).join('\n')))));
+  return s;
+}
+function aeLineCard(title, sub, buckets, series) {
+  const body = h('div'), hidden = new Set(), legend = h('div', { class: 'row', style: 'margin:6px 0' });
+  const draw = () => { body.innerHTML = ''; body.append(aeLineSvg(buckets, series.filter(x => !hidden.has(x.name)))); };
+  series.forEach(se => legend.append(h('button', { type: 'button', class: 'lg', style: '--c:' + se.color, onclick: e => { hidden.has(se.name) ? hidden.delete(se.name) : hidden.add(se.name); e.currentTarget.classList.toggle('off', hidden.has(se.name)); draw(); } }, h('i'), se.name)));
+  draw();
+  return h('div', { class: 'card' }, h('h3', {}, title), h('div', { class: 'muted small' }, sub), legend, body);
+}
+function aeDonut(parts, top, sub) {
+  const tot = parts.reduce((a, p) => a + p.v, 0);
+  const s = svg('svg', { viewBox: '0 0 42 42', width: '100%', style: 'max-width:220px;display:block;margin:6px auto', role: 'img', 'aria-label': 'GMV per platform' });
+  s.append(svg('circle', { cx: 21, cy: 21, r: 15.9155, fill: 'none', stroke: 'var(--line)', 'stroke-width': 6 }));
+  let off = 25;
+  if (tot > 0) parts.forEach(p => { const pct = p.v / tot * 100; if (pct <= 0) return; s.append(svg('circle', { cx: 21, cy: 21, r: 15.9155, fill: 'none', stroke: p.color, 'stroke-width': 6, 'stroke-dasharray': `${pct.toFixed(3)} ${(100 - pct).toFixed(3)}`, 'stroke-dashoffset': off.toFixed(3) }, svg('title', {}, p.name + ': ' + rp(p.v) + ' (' + nf(pct, 1) + '%)'))); off -= pct; });
+  s.append(svg('text', { x: 21, y: 21, 'text-anchor': 'middle', style: 'font-size:3.4px;font-weight:700', fill: 'var(--ink)' }, top), svg('text', { x: 21, y: 25, 'text-anchor': 'middle', style: 'font-size:2.4px', fill: 'var(--muted)' }, sub));
+  return s;
+}
+function aeSpark(vals, color) {
+  const W = 160, H = 38, n = vals.length, mx = Math.max(1, ...vals);
+  const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', height: 38, role: 'img', 'aria-label': 'Tren GMV platform' });
+  if (n < 2) return s;
+  let d = ''; vals.forEach((v, i) => { d += (i ? 'L' : 'M') + (i / (n - 1) * (W - 4) + 2).toFixed(1) + ' ' + (H - 3 - (H - 8) * v / mx).toFixed(1) + ' '; });
+  s.append(svg('path', { d: d + `L${W - 2} ${H} L2 ${H} Z`, fill: color, opacity: .14 }), svg('path', { d, fill: 'none', stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+  return s;
+}
+function dBadge(cur, prev, invert) {
+  if (prev == null || !prev) return badge(cur ? 'baru' : 'tetap', 'mute');
+  const pct = (cur - prev) / prev, good = invert ? pct <= 0 : pct >= 0;
+  return badge((pct >= 0 ? '▲ ' : '▼ ') + nf(Math.abs(pct) * 100, 1) + '%', Math.abs(pct) < 0.0005 ? 'mute' : good ? 'ok' : 'bad');
+}
+
+/* ----- Dashboard performa ----- */
+function aeControls(f, role, list = state.ae) {
+  const set = patch => { Object.assign(f, patch); save(); rerender(); };
+  const names = [...new Set([...employeesOf(role.id).map(e => e.name), ...list.map(r => r.name).filter(Boolean)])];
+  const pills = h('div', { class: 'pills', role: 'group', 'aria-label': 'Jenis periode' }, [['hari', 'Harian'], ['minggu', 'Mingguan'], ['bulan', 'Bulanan'], ['custom', 'Custom']].map(([k, t]) => h('button', {
+    type: 'button', class: f.mode === k ? 'on' : '', onclick: () => { const r = aeRange(f); set({ mode: k, date: r.from, month: r.from.slice(0, 7), week: weekOf(r.from), from: r.from, to: r.to }); }
+  }, t)));
+  const ctl = h('div', { class: 'row' });
+  const nav = dir => h('button', { type: 'button', class: 'sm', title: dir < 0 ? 'Periode sebelumnya' : 'Periode berikutnya', 'aria-label': dir < 0 ? 'Periode sebelumnya' : 'Periode berikutnya', onclick: () => { aeShift(f, dir); save(); rerender(); } }, dir < 0 ? '‹' : '›');
+  if (f.mode === 'hari') ctl.append(nav(-1), h('input', { type: 'date', value: f.date, onchange: e => e.target.value && set({ date: e.target.value }) }), nav(1), h('button', { type: 'button', class: 'sm', onclick: () => set({ date: today() }) }, 'Hari ini'));
+  else if (f.mode === 'minggu') ctl.append(nav(-1), h('input', { type: 'month', value: f.month, onchange: e => e.target.value && set({ month: e.target.value }) }),
+    h('select', { onchange: e => set({ week: +e.target.value }) }, [1, 2, 3, 4].map(w => h('option', { value: w, selected: w === f.week }, 'Week ' + w + (w === 4 ? ' (tgl 22–akhir)' : ' (tgl ' + ((w - 1) * 7 + 1) + '–' + w * 7 + ')')))), nav(1));
+  else if (f.mode === 'bulan') ctl.append(nav(-1), h('input', { type: 'month', value: f.month, onchange: e => e.target.value && set({ month: e.target.value }) }), nav(1));
+  else ctl.append(h('input', { type: 'date', value: f.from, 'aria-label': 'Dari tanggal', onchange: e => e.target.value && set({ from: e.target.value }) }), h('span', { class: 'muted' }, 's.d.'), h('input', { type: 'date', value: f.to, 'aria-label': 'Sampai tanggal', onchange: e => e.target.value && set({ to: e.target.value }) }));
+  const nameSel = h('select', { 'aria-label': 'Filter Account Executive', onchange: e => set({ name: e.target.value }) }, h('option', { value: '' }, 'Semua AE / tanpa nama'), names.map(n => h('option', { value: n, selected: n === f.name }, n)));
+  const cmp = h('label', { class: 'row small', style: 'gap:6px;cursor:pointer' }, h('input', { type: 'checkbox', checked: !!f.cmp, onchange: e => set({ cmp: e.target.checked }) }), 'Bandingkan dengan periode sebelumnya');
+  return h('div', { class: 'card noprint aeflt' }, h('div', { class: 'row', style: 'gap:14px' }, pills, ctl, h('span', { class: 'sp' }), nameSel, cmp));
+}
+function aeInsights(recs, cur, prev, f, rng) {
+  const out = [];
+  const byDay = {}; for (const r of recs) { const t = AEP.reduce((a, p) => a + (r[p.k] ? aeGmv(p, r[p.k]) : 0), 0); byDay[r.date] = (byDay[r.date] || 0) + t; }
+  const ds = Object.keys(byDay).filter(d => byDay[d] > 0).sort();
+  if (!ds.length) return out;
+  const best = ds.reduce((a, b) => byDay[b] > byDay[a] ? b : a), worst = ds.reduce((a, b) => byDay[b] < byDay[a] ? b : a);
+  out.push(`GMV tertinggi pada ${fmtLong(best)} sebesar ${rp(byDay[best])}` + (ds.length > 1 ? `; terendah ${fmtLong(worst)} sebesar ${rp(byDay[worst])}.` : '.'));
+  const top = AEP.map(p => ({ p, v: cur.per[p.k].gmv })).sort((a, b) => b.v - a.v)[0];
+  if (cur.gmv > 0) out.push(`${top.p.name} menyumbang ${nf(top.v / cur.gmv * 100, 1)}% dari total GMV.`);
+  if (f.cmp && prev.gmv > 0) { const g = (cur.gmv - prev.gmv) / prev.gmv; out.push(`GMV ${g >= 0 ? 'naik' : 'turun'} ${nf(Math.abs(g) * 100, 1)}% dibanding periode sebelumnya (${rp(prev.gmv)}).`); }
+  const cv = AEP.map(p => ({ p, v: cur.per[p.k].cvr })).filter(x => x.v != null).sort((a, b) => b.v - a.v);
+  if (cv.length > 1) out.push(`Konversi (CVR) terbaik: ${cv[0].p.name} ${pc(cv[0].v, 2)}; terendah: ${cv[cv.length - 1].p.name} ${pc(cv[cv.length - 1].v, 2)}.`);
+  const viol = AEP.reduce((a, p) => a + cur.per[p.k].viol + cur.per[p.k].lvViol, 0);
+  out.push(viol ? `Ada ${viol} pelanggaran toko/live pada periode ini. Periksa dan tindak lanjuti.` : 'Tidak ada pelanggaran toko/live tercatat pada periode ini.');
+  const missing = daysBetween(rng.from, rng.to > today() ? today() : rng.to) - cur.days;
+  if (missing > 0 && rng.from <= today()) out.push(`${missing} hari pada periode ini belum ada data input.`);
+  return out;
+}
+function aeKpiCard(role, cur, prev) {
+  const P = getP(role), find = n => { for (const k of role.cfg.kpis) for (const s of k.subs) if (s.name === n) return s; };
+  const shop = x => x.per.tt.shop + x.per.sp.shop + x.per.lz.shop;
+  const both = cur.days > 0 && prev.days > 0;
+  const items = [[find('Growth Net GMV Shop Tab (MoM)'), both ? shop(cur) : 0, both ? shop(prev) : 0, 'Shop GMV periode ini vs periode sebelumnya'],
+    [find('Konversi TikTok Shop vs Target'), cur.per.tt.orders, cur.per.tt.vis, 'Pesanan ÷ Visitors TikTok Shop'],
+    [find('Konversi Shopee vs Target'), cur.per.sp.orders, cur.per.sp.vis, 'Orders ÷ Visitor Shopee']].filter(x => x[0]);
+  const rows = items.map(([sub, A, B, how]) => {
+    const T = T_eff(P.subs[sub.name]), ratio = subRatio(sub, A, B), sc = subScore(sub, A, B, T, P.cap);
+    return h('tr', {}, td(h('div', {}, sub.name, h('div', { class: 'muted small' }, how))), td(fmtVal(sub, ratio), 'num'), td(fmtVal(sub, T) + (sub.assumed ? ' *' : ''), 'num'), td(scoreBadge(sc), 'num'));
+  });
+  return h('div', { class: 'card' }, h('h3', {}, 'Pratinjau KPI dari data harian'),
+    h('p', { class: 'muted small' }, 'Dihitung otomatis dari input harian memakai target pada tab Parameter. Ini pratinjau; nilai final bonus tetap dari Input Metrik dan verifikasi atasan.'),
+    tbl(['Sub-KPI', { t: 'Capaian', num: 1 }, { t: 'Target', num: 1 }, { t: 'Skor', num: 1 }], rows),
+    items.some(x => x[0].assumed) ? h('div', { class: 'muted small', style: 'margin-top:6px' }, '* Target masih placeholder; ubah di tab Parameter.') : null);
+}
+function aeCsv(recs) {
+  const head = ['Tanggal', 'AE']; for (const p of AEP) { for (const [k, l] of p.f) head.push(p.name + ' ' + l); head.push(p.name + ' Daily Report'); }
+  return csv([head, ...recs.slice().sort((a, b) => a.date < b.date ? -1 : 1).map(r => { const row = [r.date, r.name || '']; for (const p of AEP) { for (const [k] of p.f) row.push((r[p.k] || {})[k]); row.push((r[p.k] || {}).report || ''); } return row; })]);
+}
+function pageAeDash(role) {
+  const box = h('div'), f = aeFilter(), rng = aeRange(f), prevR = aePrevRange(f);
+  box.append(aeControls(f, role));
+  const recs = aeRecs(rng.from, rng.to, f.name), cur = aeAll(recs), prev = aeAll(aeRecs(prevR.from, prevR.to, f.name));
+  const sub = rng.label + (f.cmp ? ' · dibanding ' + prevR.label : '') + (f.name ? ' · ' + f.name : '');
+  if (!state.ae.length) {
+    box.append(h('div', { class: 'card' }, h('h3', {}, 'Belum ada data harian'), h('p', {}, 'Isi data lewat tab Input Harian, atau impor CSV dari sheet Tabel_Input. Dashboard akan terisi otomatis.'),
+      h('div', { class: 'row' }, h('a', { class: 'btnlike primary', href: '#/r/' + role.id + '/harian' }, 'Buka Input Harian'), h('button', { onclick: () => { aeDemo(); toast('Data contoh dimuat'); rerender(); } }, 'Muat data contoh'))));
+    return box;
+  }
+  const hero = h('div', { class: 'hero' }, h('h3', {}, 'Dashboard Marketplace – Kime Skincare'), h('p', {}, sub));
+  const kp = (lab, val, d, inv) => h('div', { class: 'aek' }, h('span', {}, lab), h('b', {}, val), f.cmp ? d : null);
+  hero.append(h('div', { class: 'aekpi' },
+    kp('Total GMV All Marketplace', rpC(cur.gmv), dBadge(cur.gmv, prev.gmv)), kp('Total Orders', nf(cur.orders, 0), dBadge(cur.orders, prev.orders)),
+    kp('Product Sold', nf(cur.sold, 0), dBadge(cur.sold, prev.sold)), kp('AOV', rp(cur.aov), dBadge(cur.aov, prev.aov)),
+    kp('Rata-rata GMV / hari', rpC(cur.days ? cur.gmv / cur.days : null), prev.days ? dBadge(cur.days ? cur.gmv / cur.days : 0, prev.gmv / prev.days) : null), kp('Hari terisi', cur.days + ' hari', null)));
+  box.append(hero);
+  /* donut + tren */
+  const bk = aeBuckets(rng.from, rng.to);
+  const bAll = bk.map(b => aeAll(recs.filter(r => r.date >= b.f && r.date <= b.t)));
+  const series = [{ name: 'Total', color: '#8b5cf6', area: true, vals: bAll.map(x => x.gmv) }, ...AEP.map(p => ({ name: p.name, color: p.color, vals: bAll.map(x => x.per[p.k].gmv) }))];
+  const parts = AEP.map(p => ({ name: p.name, color: p.color, v: cur.per[p.k].gmv }));
+  const don = h('div', { class: 'card' }, h('h3', {}, 'GMV per Platform'), aeDonut(parts, rpC(cur.gmv), 'total GMV'),
+    h('div', { class: 'col', style: 'gap:6px;margin-top:6px' }, parts.map(p => h('div', { class: 'row small', style: 'justify-content:space-between' }, h('span', { class: 'row', style: 'gap:6px' }, h('i', { class: 'sw', style: 'background:' + p.color }), p.name), h('b', {}, cur.gmv ? nf(p.v / cur.gmv * 100, 1) + '%' : '–', h('span', { class: 'muted', style: 'font-weight:400' }, ' · ' + rpC(p.v)))))));
+  box.append(h('div', { class: 'aesplit' }, don, aeLineCard('Tren GMV', (bk.length > 1 && daysBetween(rng.from, rng.to) > 62 ? 'Dikelompokkan ' + (daysBetween(rng.from, rng.to) > 200 ? 'per bulan' : 'per 7 hari') + ' · ' : 'Per hari · ') + 'klik nama di legenda untuk menampilkan/menyembunyikan garis', bk, series)));
+  /* per platform */
+  const pcards = h('div', { class: 'aeplats' });
+  AEP.forEach((p, i) => {
+    const a = cur.per[p.k], b = prev.per[p.k], m = (l, v) => h('div', {}, h('span', {}, l), h('b', {}, v));
+    pcards.append(h('div', { class: 'card aeplat', style: '--c:' + p.color }, h('div', { class: 'row' }, h('h3', { style: 'margin:0' }, p.name), h('span', { class: 'sp' }), f.cmp ? dBadge(a.gmv, b.gmv) : null),
+      h('div', { class: 'big' }, rp(a.gmv)), aeSpark(bAll.map(x => x.per[p.k].gmv), p.color),
+      h('div', { class: 'aemet' }, m('Orders', nf(a.orders, 0)), m('Product Sold', nf(a.sold, 0)), m('AOV', rp(a.aov)), m('CVR', pc(a.cvr, 2)), m('Score toko', a.score == null ? '–' : nf(a.score, 2) + '/5'),
+        m('Pelanggaran', nf(a.viol + a.lvViol, 0)), m('Customer RO', nf(a.ro, 0) + (a.roPct != null ? ' (' + nf(a.roPct * 100, 0) + '%)' : '')), m('Customer New', nf(a.nw, 0)), m('Page Views', nf(a.pv, 0)), m('Visitors', nf(a.vis, 0)))));
+  });
+  box.append(pcards);
+  const ins = aeInsights(recs, cur, prev, f, rng);
+  if (ins.length) box.append(h('div', { class: 'card' }, h('h3', {}, 'Ringkasan otomatis'), h('ul', { class: 'tight' }, ins.map(x => h('li', {}, x)))));
+  box.append(aeKpiCard(role, cur, prev));
+  /* rangkuman harian */
+  const byDate = {}; for (const r of recs) (byDate[r.date] ||= []).push(r);
+  const dates = Object.keys(byDate).sort().reverse();
+  const rows = dates.slice(0, 120).map(d => {
+    const x = aeAll(byDate[d]);
+    return h('tr', {}, td(fmtDate(d)), td(rp(x.per.tt.gmv), 'num'), td(rp(x.per.sp.gmv), 'num'), td(rp(x.per.lz.gmv), 'num'), td(h('b', {}, rp(x.gmv)), 'num'), td(nf(x.orders, 0), 'num'), td(rp(x.aov), 'num'),
+      td(h('button', { class: 'sm noprint', onclick: () => { aeForm = null; state.ui.aeDate = d; save(); go('#/r/' + role.id + '/harian'); } }, 'Buka')));
+  });
+  box.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('h3', { style: 'margin:0' }, 'Rangkuman harian'), h('span', { class: 'muted small' }, dates.length + ' hari' + (dates.length > 120 ? ' (menampilkan 120 terbaru)' : '')), h('span', { class: 'sp' }),
+    h('button', { class: 'sm noprint', onclick: () => download('performa-ae-' + rng.from + '_' + rng.to + '.csv', aeCsv(recs), 'text/csv') }, 'Ekspor CSV'), h('button', { class: 'sm noprint', onclick: () => window.print() }, 'Cetak')),
+    h('div', { style: 'margin-top:10px' }, tbl(['Tanggal', { t: 'TikTok Shop', num: 1 }, { t: 'Shopee', num: 1 }, { t: 'Lazada', num: 1 }, { t: 'Total GMV', num: 1 }, { t: 'Orders', num: 1 }, { t: 'AOV', num: 1 }, ''], rows, { empty: 'Tidak ada data pada periode ini.' }))));
+  /* catatan daily report */
+  const notes = []; recs.slice().sort((a, b) => a.date < b.date ? 1 : -1).forEach(r => AEP.forEach(p => { const t = (r[p.k] || {}).report; if (t) notes.push([r, p, t]); }));
+  if (notes.length) box.append(h('div', { class: 'card' }, h('h3', {}, 'Catatan Daily Report'), h('div', { class: 'col', style: 'gap:8px' }, notes.slice(0, 20).map(([r, p, t]) => h('div', { class: 'note info', style: 'margin:0' }, h('b', {}, fmtDate(r.date) + ' · ' + p.name + (r.name ? ' · ' + r.name : '') + ': '), t))),
+    notes.length > 20 ? h('div', { class: 'muted small', style: 'margin-top:6px' }, 'Menampilkan 20 catatan terbaru dari ' + notes.length + '.') : null));
+  return box;
+}
+
+/* ----- Input harian ----- */
+let aeForm = null;
+const aeBlank = (date, name) => ({ date, name: name || '', tt: {}, sp: {}, lz: {} });
+function aeLoad(date, name) {
+  const ex = state.ae.find(r => r.date === date && (r.name || '') === (name || ''));
+  aeForm = ex ? clone(ex) : aeBlank(date, name);
+}
+function aeSave(role, next) {
+  const F = aeForm; if (!F.date) { toast('Isi tanggal dulu', 'err'); return; }
+  const has = AEP.some(p => Object.entries(F[p.k]).some(([k, v]) => k !== 'report' ? v != null : !!v));
+  if (!has) { toast('Belum ada angka yang diisi', 'err'); return; }
+  const rec = { id: F.id || uid(), date: F.date, name: F.name || '', tt: clone(F.tt), sp: clone(F.sp), lz: clone(F.lz), at: Date.now() };
+  const i = state.ae.findIndex(r => r.date === rec.date && (r.name || '') === rec.name);
+  if (i >= 0) { rec.id = state.ae[i].id; state.ae[i] = rec; } else state.ae.push(rec);
+  F.id = rec.id; state.ui.ae = null; save();
+  if (next) { aeLoad(iso(addDays(pd(F.date), 1)), F.name); state.ui.aeDate = aeForm.date; }
+  toast('Tersimpan: ' + fmtDate(rec.date) + (next ? ' · lanjut ke ' + fmtDate(aeForm.date) : '')); rerender();
+}
+function pageAeInput(role) {
+  const box = h('div');
+  if (!aeForm) { const d = state.ui.aeDate || today(); aeLoad(d, ''); }
+  const F = aeForm, exists = state.ae.some(r => r.date === F.date && (r.name || '') === (F.name || ''));
+  box.append(h('div', { class: 'note info' }, 'Form ini mengikuti kolom sheet Tabel_Input (TikTok Shop, Shopee, Lazada). Total GMV, AOV, CVR, Periode, Week, dan Tahun dihitung otomatis. Data yang sudah ada pada tanggal yang sama akan dimuat dan diperbarui, bukan digandakan.'));
+  const calc = {}; const grand = h('div', { class: 'calcrow' });
+  const updAll = () => {
+    let g = 0, o = 0, s = 0;
+    for (const p of AEP) {
+      const d = F[p.k], gm = aeGmv(p, d), ord = N(d.orders), den = p.cvrBy === 'vis' ? N(d.vis) : N(d.pv);
+      g += gm; o += ord; s += N(d.sold);
+      calc[p.k].gmv.textContent = rp(gm); calc[p.k].aov.textContent = ord ? rp(gm / ord) : '–'; calc[p.k].cvr.textContent = den ? pc(ord / den, 2) : '–';
+    }
+    grand.innerHTML = ''; grand.append(h('span', {}, 'Total GMV semua marketplace: ', h('b', {}, rp(g))), h('span', {}, 'Total Orders: ', h('b', {}, nf(o, 0))), h('span', {}, 'Total Product Sold: ', h('b', {}, nf(s, 0))));
+  };
+  const nameSel = empSelect(role.id, F.name, { onchange: e => { aeLoad(F.date, e.target.value); rerender(); } });
+  const dt = new Date(F.date + 'T00:00:00');
+  box.append(h('div', { class: 'card' }, h('div', { class: 'row', style: 'gap:14px;align-items:flex-end' },
+    field('Tanggal', h('input', { type: 'date', value: F.date, onchange: e => { if (!e.target.value) return; aeLoad(e.target.value, F.name); state.ui.aeDate = e.target.value; save(); rerender(); } })),
+    field('Account Executive (opsional)', nameSel),
+    h('div', { class: 'row small muted' }, badge(isNaN(dt) ? '–' : MONTHS[dt.getMonth()], 'mute'), badge('Week ' + weekOf(F.date), 'mute'), badge(String(F.date.slice(0, 4)), 'mute'), badge(exists ? 'Data tanggal ini sudah ada – akan diperbarui' : 'Data baru', exists ? 'warn' : 'ok')),
+    h('span', { class: 'sp' }), h('button', { class: 'sm', onclick: () => { aeForm = aeBlank(F.date, F.name); rerender(); } }, 'Kosongkan form')), grand));
+  for (const p of AEP) {
+    const d = F[p.k], card = h('div', { class: 'card aeplat', style: '--c:' + p.color }, h('h3', {}, p.name));
+    const g = h('div', { class: 'grid g3' });
+    for (const [k, label, kind] of p.f) {
+      g.append(field(label + (kind === 'rp' ? ' (Rp)' : ''), h('input', { type: 'number', step: kind === 'dec' ? '0.01' : kind === 'rp' ? '1' : '1', min: 0, max: k === 'score' ? 5 : null, inputmode: 'decimal', value: d[k] == null ? '' : d[k], placeholder: kind === 'rp' ? '0' : '', oninput: e => { d[k] = num(e.target.value); updAll(); } })));
+    }
+    card.append(g);
+    calc[p.k] = { gmv: h('b'), aov: h('b'), cvr: h('b') };
+    card.append(h('div', { class: 'calcrow' }, h('span', {}, 'Total GMV: ', calc[p.k].gmv), h('span', {}, 'AOV: ', calc[p.k].aov), h('span', {}, 'CVR (' + (p.cvrBy === 'vis' ? 'pesanan ÷ visitor' : 'pesanan ÷ page views') + '): ', calc[p.k].cvr)));
+    card.append(field('Daily Report ' + p.name, h('textarea', { rows: 2, placeholder: 'Catatan harian: kendala, aksi yang dilakukan, rencana besok…', oninput: e => { d.report = e.target.value; } }, d.report || '')));
+    box.append(card);
+  }
+  updAll();
+  box.append(h('div', { class: 'row', style: 'margin-bottom:16px' }, h('button', { class: 'primary', onclick: () => aeSave(role, false) }, exists ? 'Perbarui data' : 'Simpan data'), h('button', { onclick: () => aeSave(role, true) }, 'Simpan & lanjut hari berikutnya'),
+    exists && isBoss() ? h('button', { class: 'danger', onclick: () => { if (confirm('Hapus data tanggal ' + fmtDate(F.date) + '?')) { state.ae = state.ae.filter(r => !(r.date === F.date && (r.name || '') === (F.name || ''))); state.ui.ae = null; save(); aeForm = aeBlank(F.date, F.name); toast('Data dihapus'); rerender(); } } }, 'Hapus data tanggal ini') : null,
+    h('a', { class: 'btnlike', href: '#/r/' + role.id + '/dash' }, 'Lihat dashboard →')));
+  /* data tersimpan */
+  const ym = state.ui.aeListMonth || F.date.slice(0, 7);
+  const list = state.ae.filter(r => r.date.slice(0, 7) === ym).sort((a, b) => a.date < b.date ? 1 : -1);
+  const rows = list.map(r => { const x = aeAll([r]); return h('tr', {}, td(fmtDate(r.date)), td(r.name || '–'), td(rp(x.per.tt.gmv), 'num'), td(rp(x.per.sp.gmv), 'num'), td(rp(x.per.lz.gmv), 'num'), td(h('b', {}, rp(x.gmv)), 'num'), td(nf(x.orders, 0), 'num'),
+    td(h('div', { class: 'row noprint', style: 'gap:6px' }, h('button', { class: 'sm', onclick: () => { aeLoad(r.date, r.name); state.ui.aeDate = r.date; save(); rerender(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }, 'Edit'),
+      isBoss() ? h('button', { class: 'sm danger', onclick: () => { if (confirm('Hapus data ' + fmtDate(r.date) + '?')) { state.ae = state.ae.filter(z => z.id !== r.id); state.ui.ae = null; save(); rerender(); } } }, 'Hapus') : null))); });
+  box.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('h3', { style: 'margin:0' }, 'Data harian tersimpan'), h('input', { type: 'month', value: ym, onchange: e => { state.ui.aeListMonth = e.target.value; save(); rerender(); } }), h('span', { class: 'muted small' }, list.length + ' hari')),
+    h('div', { style: 'margin-top:10px' }, tbl(['Tanggal', 'AE', { t: 'TikTok Shop', num: 1 }, { t: 'Shopee', num: 1 }, { t: 'Lazada', num: 1 }, { t: 'Total GMV', num: 1 }, { t: 'Orders', num: 1 }, ''], rows, { empty: 'Belum ada data pada bulan ini.' }))));
+  /* impor */
+  const fileI = h('input', { type: 'file', accept: '.csv,text/csv', style: 'display:none', onchange: e => { const fl = e.target.files[0]; if (!fl) return; fl.text().then(t => { const r = aeImport(t); if (!r.n) toast('Tidak ada baris tanggal yang valid di file ini', 'err'); else { toast(r.n + ' hari diimpor (' + r.add + ' baru, ' + r.upd + ' diperbarui)'); rerender(); } }); e.target.value = ''; } });
+  box.append(h('div', { class: 'card' }, h('h3', {}, 'Impor dari Tabel_Input (CSV)'), h('p', { class: 'muted small' }, 'Di Google Sheets: buka tab Tabel_Input → File → Download → Comma-separated values (.csv). Lalu pilih file itu di sini. Urutan kolom harus sama dengan sheet (A=Tanggal … AV=Daily Report Lazada). Tanggal yang sudah ada akan diperbarui. Kolom hasil hitung (Total GMV, AOV, CVR, Periode) diabaikan karena dihitung ulang.'),
+    h('div', { class: 'row' }, h('button', { onclick: () => fileI.click() }, 'Pilih file CSV…'), fileI, h('button', { class: 'sm', onclick: () => { aeDemo(); toast('Data contoh 45 hari dimuat'); rerender(); } }, 'Isi data contoh'),
+      state.ae.length ? h('button', { class: 'sm', onclick: () => download('data-harian-ae.csv', aeCsv(state.ae), 'text/csv') }, 'Ekspor semua (CSV)') : null)));
+  return box;
+}
+function parseCSV(text) {
+  const first = text.split(/\r?\n/, 1)[0] || '', delim = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ';' : ',';
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === delim) { row.push(cell); cell = ''; }
+    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+    else if (c !== '\r') cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return { rows, delim };
+}
+function aeImport(text) {
+  const { rows, delim } = parseCSV(text.replace(/^﻿/, '')), idn = delim === ';';
+  const pn = s => { if (s == null) return null; s = String(s).trim(); if (!s) return null; s = idn ? s.replace(/\./g, '').replace(',', '.') : s; const t = s.replace(/[^0-9.\-]/g, ''); const v = parseFloat(t); return isNaN(v) ? null : v; };
+  const pdt = s => { s = String(s || '').trim(); let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`; m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if (!m) return null; let mo = +m[1], dy = +m[2]; if (idn || mo > 12) [mo, dy] = [dy, mo]; return (mo >= 1 && mo <= 12 && dy >= 1 && dy <= 31) ? `${m[3]}-${pad(mo)}-${pad(dy)}` : null; };
+  /* indeks kolom (0 = A) sesuai Tabel_Input */
+  const MAP = { tt: { live: 2, video: 3, aff: 4, shop: 5, viol: 6, score: 7, lvViol: 8, orders: 9, sold: 10, ro: 11, new: 12, pv: 14, vis: 15, rep: 17 },
+    sp: { live: 19, aff: 20, video: 21, shop: 22, viol: 23, lvViol: 24, score: 25, orders: 26, sold: 27, ro: 28, new: 29, vis: 31, pv: 32, rep: 34 },
+    lz: { shop: 36, viol: 37, score: 38, orders: 39, sold: 40, ro: 41, new: 42, pv: 44, vis: 45, rep: 47 } };
+  let add = 0, upd = 0;
+  for (const r of rows) {
+    const date = pdt(r[0]); if (!date) continue;
+    const rec = { id: uid(), date, name: '', tt: {}, sp: {}, lz: {}, at: Date.now() };
+    for (const pk of ['tt', 'sp', 'lz']) for (const [k, ix] of Object.entries(MAP[pk])) { if (k === 'rep') { const t = (r[ix] || '').trim(); if (t) rec[pk].report = t; } else { const v = pn(r[ix]); if (v != null) rec[pk][k] = v; } }
+    const i = state.ae.findIndex(x => x.date === date && !x.name);
+    if (i >= 0) { rec.id = state.ae[i].id; state.ae[i] = rec; upd++; } else { state.ae.push(rec); add++; }
+  }
+  if (add + upd) { state.ui.ae = null; aeForm = null; save(); }
+  return { n: add + upd, add, upd };
+}
+function aeDemo() {
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const end = new Date(), has = new Set(state.ae.map(r => r.date + '|'));
+  for (let i = 44; i >= 0; i--) {
+    const date = iso(addDays(end, -i)); if (has.has(date + '|')) continue;
+    const trend = 1 + (44 - i) / 90, spike = (i % 15 === 0) ? 2.4 : 1, w = trend * spike * (0.8 + rnd() * 0.5);
+    const mk = (base, aov, vis, cv) => { const orders = Math.round(base * w / aov); return { orders, vis: Math.round(orders / cv), pv: Math.round(orders / cv * 1.6), sold: Math.round(orders * 1.3), ro: Math.round(orders * 0.3), new: Math.round(orders * 0.7), score: 4.9, viol: 0, lvViol: 0 }; };
+    const tt = mk(4.5e6, 42000, 0, 0.055); tt.live = Math.round(rnd() * 8e5 * w); tt.video = Math.round(rnd() * 3e5 * w); tt.aff = Math.round(3.4e6 * w); tt.shop = Math.round(1.1e6 * w);
+    const sp = mk(3.8e6, 38000, 0, 0.05); sp.live = Math.round(rnd() * 6e5 * w); sp.aff = Math.round(1.3e6 * w); sp.video = Math.round(rnd() * 1e5 * w); sp.shop = Math.round(2.4e6 * w);
+    const lz = mk(6e5, 55000, 0, 0.16); lz.shop = Math.round(6e5 * w); lz.score = 4.86; lz.viol = 0; delete lz.lvViol;
+    state.ae.push({ id: uid(), date, name: '', tt, sp, lz, at: Date.now() });
+  }
+  state.ui.ae = null; aeForm = null; save();
+}
+/* ---------- Creator Executive (Community): input harian & dashboard performa ---------- */
+const CM_TABS = ['Creator Executive (Top)', 'Creator Executive (Incubation)'];
+const isCM = role => CM_TABS.includes(role.tab);
+let CMR = null;
+const cmList = () => state.cm.filter(r => (r.roleId || 'r8') === CMR.id);
+const cmK = k => k + CMR.id;
+const cmSame = (r, date, name) => (r.roleId || 'r8') === CMR.id && r.date === date && (r.name || '') === (name || '');
+const cmReset = () => { state.ui[cmK('cm')] = null; cmForm = null; };
+const CMP = [
+  { k: 'tt', name: 'TikTok Shop', color: '#06b6d4', g: 'affTT', vt: 'vtTT', ls: 'lsTT' },
+  { k: 'sp', name: 'Shopee', color: '#f97316', g: 'affSP', vt: 'vtSP', ls: 'lsSP' },
+  { k: 'lz', name: 'Lazada', color: '#6366f1', g: 'affLZ' },
+];
+/* kolom sesuai sheet InputGMV */
+const CMF = [
+  ['Affiliate GMV', [['affTT', 'Affiliate GMV TikTok', 'rp'], ['affSP', 'Affiliate GMV Shopee', 'rp'], ['affLZ', 'Affiliate GMV Lazada', 'rp']]],
+  ['Jumlah VT & LS (output creator)', [['vtTT', 'Jumlah VT TikTok', 'int'], ['lsTT', 'Jumlah LS TikTok', 'int'], ['vtSP', 'Jumlah VT Shopee', 'int'], ['lsSP', 'Jumlah LS Shopee', 'int']]],
+  ['Penjualan', [['sold', 'Product Sold By Creator', 'int']]],
+];
+const cmRecs = (from, to, name) => cmList().filter(r => r.date >= from && r.date <= to && (!name || r.name === name));
+function cmAll(recs) {
+  const a = { g: { tt: 0, sp: 0, lz: 0 }, vt: { tt: 0, sp: 0 }, ls: { tt: 0, sp: 0 }, sold: 0, days: 0 };
+  const dates = new Set();
+  for (const r of recs) {
+    a.g.tt += N(r.affTT); a.g.sp += N(r.affSP); a.g.lz += N(r.affLZ);
+    a.vt.tt += N(r.vtTT); a.vt.sp += N(r.vtSP); a.ls.tt += N(r.lsTT); a.ls.sp += N(r.lsSP); a.sold += N(r.sold);
+    if (N(r.affTT) + N(r.affSP) + N(r.affLZ) + N(r.vtTT) + N(r.vtSP) + N(r.lsTT) + N(r.lsSP) > 0) dates.add(r.date);
+  }
+  a.gmv = a.g.tt + a.g.sp + a.g.lz; a.vtAll = a.vt.tt + a.vt.sp; a.lsAll = a.ls.tt + a.ls.sp; a.out = a.vtAll + a.lsAll;
+  a.gpo = a.out ? a.gmv / a.out : null; a.days = dates.size;
+  return a;
+}
+const cmOne = r => cmAll([r]);
+function cmCsv(recs) {
+  const head = ['Tanggal', 'Creator Executive', 'Affiliate GMV Tiktok', 'Affiliate GMV Shopee', 'Affiliate GMV Lazzada', 'Total', 'Jumlah VT Tiktok', 'Jumlah LS Tiktok', 'Product Sold By Creator', 'Jumlah VT Shopee', 'Jumlah LS Shopee', 'Total'];
+  return csv([head, ...recs.slice().sort((a, b) => a.date < b.date ? -1 : 1).map(r => { const x = cmOne(r); return [r.date, r.name || '', r.affTT, r.affSP, r.affLZ, x.gmv, r.vtTT, r.lsTT, r.sold, r.vtSP, r.lsSP, x.out]; })]);
+}
+
+/* ----- dashboard ----- */
+const CMSPEC = {
+  'Creator Executive (Community)': { title: 'Live & VT Output', items: [['Output VT vs Target', 'vtAll', 'vt', 'Total Jumlah VT (TikTok + Shopee)'], ['Output Live vs Target', 'lsAll', 'ls', 'Total Jumlah LS (TikTok + Shopee)']] },
+  'Creator Executive (Top)': { title: 'Net GMV Portofolio & Komitmen Live/VT', items: [['Net GMV Portofolio vs Target Disetujui', 'gmv', 'gmv', 'Total Affiliate GMV (semua platform)'], ['Komitmen Live Terpenuhi', 'lsAll', 'ls', 'Total Jumlah LS dibanding total komitmen Live'], ['Komitmen VT Terpenuhi', 'vtAll', 'vt', 'Total Jumlah VT dibanding total komitmen VT']] },
+  'Creator Executive (Incubation)': { title: '', items: [] },
+};
+function cmKpiCard(role, cur, rng) {
+  const sp = CMSPEC[role.tab] || { title: '', items: [] };
+  if (!sp.items.length) return h('div', { class: 'card' }, h('h3', {}, 'Pratinjau KPI'), h('p', { class: 'muted small' }, 'KPI posisi ini berbasis jumlah creator (qualified, retention, uplift, posting rate), bukan GMV atau output harian, sehingga belum dihitung otomatis dari data harian. Isi lewat tab Input Metrik.'));
+  const P = getP(role), find = n => { for (const k of role.cfg.kpis) for (const s of k.subs) if (s.name === n) return s; };
+  const key = rng.from + '|' + rng.to + '|' + role.id, tg = ((state.ui.cmT ||= {})[key] ||= {});
+  const items = sp.items.map(x => [find(x[0]), cur[x[1]], x[2], x[3]]).filter(x => x[0]);
+  const rows = items.map(([sub, A, k, how]) => {
+    const T = T_eff(P.subs[sub.name]), B = tg[k] || 0, ratio = subRatio(sub, A, B), sc = subScore(sub, A, B, T, P.cap), money = k === 'gmv';
+    const inp = h('input', { type: 'number', min: 0, step: 1, value: tg[k] == null ? '' : tg[k], placeholder: money ? 'target Rp' : 'isi target', style: 'width:130px', 'aria-label': 'Target ' + sub.name, onchange: e => { tg[k] = num(e.target.value); save(); rerender(); } });
+    return h('tr', {}, td(h('div', {}, sub.name, h('div', { class: 'muted small' }, how))), td(money ? rp(A) : nf(A, 0), 'num'), td(inp, 'num'), td(fmtVal(sub, ratio), 'num'), td(fmtVal(sub, T) + (sub.assumed ? ' *' : ''), 'num'), td(scoreBadge(sc), 'num'));
+  });
+  return h('div', { class: 'card' }, h('h3', {}, 'Pratinjau KPI: ' + sp.title),
+    h('p', { class: 'muted small' }, 'Aktual diambil dari data harian. Isi target untuk periode yang sedang ditampilkan (tersimpan per periode). Ini pratinjau; nilai final bonus tetap dari Input Metrik dan verifikasi atasan.'),
+    tbl(['Sub-KPI', { t: 'Aktual', num: 1 }, { t: 'Target', num: 1 }, { t: 'Capaian', num: 1 }, { t: 'Target %', num: 1 }, { t: 'Skor', num: 1 }], rows),
+    items.some(x => x[0].assumed) ? h('div', { class: 'muted small', style: 'margin-top:6px' }, '* Target % masih placeholder; ubah di tab Parameter.') : null);
+}
+function cmInsights(recs, cur, prev, f, rng) {
+  const out = [], byDay = {};
+  for (const r of recs) byDay[r.date] = (byDay[r.date] || 0) + cmOne(r).gmv;
+  const ds = Object.keys(byDay).filter(d => byDay[d] > 0).sort();
+  if (!ds.length) return out;
+  const best = ds.reduce((a, b) => byDay[b] > byDay[a] ? b : a), worst = ds.reduce((a, b) => byDay[b] < byDay[a] ? b : a);
+  out.push(`Affiliate GMV tertinggi pada ${fmtLong(best)} sebesar ${rp(byDay[best])}` + (ds.length > 1 ? `; terendah ${fmtLong(worst)} sebesar ${rp(byDay[worst])}.` : '.'));
+  const top = CMP.map(p => ({ p, v: cur.g[p.k] })).sort((a, b) => b.v - a.v)[0];
+  if (cur.gmv > 0) out.push(`${top.p.name} menyumbang ${nf(top.v / cur.gmv * 100, 1)}% dari total Affiliate GMV.`);
+  if (f.cmp && prev.gmv > 0) { const g = (cur.gmv - prev.gmv) / prev.gmv; out.push(`Affiliate GMV ${g >= 0 ? 'naik' : 'turun'} ${nf(Math.abs(g) * 100, 1)}% dibanding periode sebelumnya (${rp(prev.gmv)}).`); }
+  if (f.cmp && prev.out > 0) { const g = (cur.out - prev.out) / prev.out; out.push(`Total output VT + LS ${g >= 0 ? 'naik' : 'turun'} ${nf(Math.abs(g) * 100, 1)}% dibanding periode sebelumnya (${nf(prev.out, 0)}).`); }
+  if (cur.out > 0) out.push(`Komposisi output: VT ${nf(cur.vtAll / cur.out * 100, 1)}% dan LS ${nf(cur.lsAll / cur.out * 100, 1)}%; rata-rata ${nf(cur.out / Math.max(1, cur.days), 0)} output per hari.`);
+  if (cur.gpo != null) out.push(`Setiap output menghasilkan rata-rata ${rp(cur.gpo)} Affiliate GMV.`);
+  const missing = daysBetween(rng.from, rng.to > today() ? today() : rng.to) - cur.days;
+  if (missing > 0 && rng.from <= today()) out.push(`${missing} hari pada periode ini belum ada data input.`);
+  return out;
+}
+function pageCmDash(role) {
+  CMR = role; const box = h('div'), f = aeFilter(cmK('cm'), cmList()), rng = aeRange(f), prevR = aePrevRange(f);
+  box.append(aeControls(f, role, cmList()));
+  const recs = cmRecs(rng.from, rng.to, f.name), cur = cmAll(recs), prev = cmAll(cmRecs(prevR.from, prevR.to, f.name));
+  const sub = rng.label + (f.cmp ? ' · dibanding ' + prevR.label : '') + (f.name ? ' · ' + f.name : '');
+  if (!cmList().length) {
+    box.append(h('div', { class: 'card' }, h('h3', {}, 'Belum ada data harian'), h('p', {}, 'Isi data lewat tab Input Harian, atau impor CSV dari sheet InputGMV. Dashboard akan terisi otomatis.'),
+      h('div', { class: 'row' }, h('a', { class: 'btnlike primary', href: '#/r/' + role.id + '/harian' }, 'Buka Input Harian'), h('button', { onclick: () => { cmDemo(); toast('Data contoh dimuat'); rerender(); } }, 'Muat data contoh'))));
+    return box;
+  }
+  const hero = h('div', { class: 'hero' }, h('h3', {}, 'Dashboard ' + role.tab + ' – Kime Skincare'), h('p', {}, sub));
+  const kp = (lab, val, d) => h('div', { class: 'aek' }, h('span', {}, lab), h('b', {}, val), f.cmp ? d : null);
+  const avg = x => x.days ? x.gmv / x.days : 0;
+  hero.append(h('div', { class: 'aekpi' },
+    kp('Total Affiliate GMV', rpC(cur.gmv), dBadge(cur.gmv, prev.gmv)), kp('Total Output (VT + LS)', nf(cur.out, 0), dBadge(cur.out, prev.out)),
+    kp('Jumlah VT', nf(cur.vtAll, 0), dBadge(cur.vtAll, prev.vtAll)), kp('Jumlah LS', nf(cur.lsAll, 0), dBadge(cur.lsAll, prev.lsAll)),
+    kp('Product Sold By Creator', nf(cur.sold, 0), dBadge(cur.sold, prev.sold)), kp('GMV per Output', rp(cur.gpo), dBadge(cur.gpo || 0, prev.gpo)),
+    kp('Rata-rata GMV / hari', rpC(cur.days ? avg(cur) : null), prev.days ? dBadge(avg(cur), avg(prev)) : null), kp('Hari terisi', cur.days + ' hari', null)));
+  box.append(hero);
+  const bk = aeBuckets(rng.from, rng.to), bAll = bk.map(b => cmAll(recs.filter(r => r.date >= b.f && r.date <= b.t)));
+  const gSeries = [{ name: 'Total', color: '#8b5cf6', area: true, vals: bAll.map(x => x.gmv) }, ...CMP.map(p => ({ name: p.name, color: p.color, vals: bAll.map(x => x.g[p.k]) }))];
+  const oSeries = [{ name: 'Total output', color: '#8b5cf6', area: true, fmt: v => nf(v, 0), vals: bAll.map(x => x.out) }, { name: 'VT', color: '#06b6d4', fmt: v => nf(v, 0), vals: bAll.map(x => x.vtAll) }, { name: 'LS', color: '#f97316', fmt: v => nf(v, 0), vals: bAll.map(x => x.lsAll) }];
+  const parts = CMP.map(p => ({ name: p.name, color: p.color, v: cur.g[p.k] }));
+  const grp = daysBetween(rng.from, rng.to) > 62 ? 'Dikelompokkan ' + (daysBetween(rng.from, rng.to) > 200 ? 'per bulan' : 'per 7 hari') + ' · ' : 'Per hari · ';
+  const don = h('div', { class: 'card' }, h('h3', {}, 'Affiliate GMV per Platform'), aeDonut(parts, rpC(cur.gmv), 'total GMV'),
+    h('div', { class: 'col', style: 'gap:6px;margin-top:6px' }, parts.map(p => h('div', { class: 'row small', style: 'justify-content:space-between' }, h('span', { class: 'row', style: 'gap:6px' }, h('i', { class: 'sw', style: 'background:' + p.color }), p.name), h('b', {}, cur.gmv ? nf(p.v / cur.gmv * 100, 1) + '%' : '–', h('span', { class: 'muted', style: 'font-weight:400' }, ' · ' + rpC(p.v)))))));
+  box.append(h('div', { class: 'aesplit' }, don, aeLineCard('Tren Affiliate GMV', grp + 'klik nama di legenda untuk menampilkan/menyembunyikan garis', bk, gSeries)));
+  box.append(aeLineCard('Tren Output Creator (VT & LS)', grp + 'jumlah video (VT) dan live (LS) per periode', bk, oSeries));
+  const pcards = h('div', { class: 'aeplats' });
+  CMP.forEach(p => {
+    const g = cur.g[p.k], pg = prev.g[p.k], m = (l, v) => h('div', {}, h('span', {}, l), h('b', {}, v));
+    const vt = p.vt ? cur.vt[p.k] : null, ls = p.ls ? cur.ls[p.k] : null;
+    pcards.append(h('div', { class: 'card aeplat', style: '--c:' + p.color }, h('div', { class: 'row' }, h('h3', { style: 'margin:0' }, p.name), h('span', { class: 'sp' }), f.cmp ? dBadge(g, pg) : null),
+      h('div', { class: 'big' }, rp(g)), aeSpark(bAll.map(x => x.g[p.k]), p.color),
+      h('div', { class: 'aemet' }, m('Kontribusi GMV', cur.gmv ? nf(g / cur.gmv * 100, 1) + '%' : '–'), ...(p.vt ? [m('Jumlah VT', nf(vt, 0)), m('Jumlah LS', nf(ls, 0)), m('Output (VT+LS)', nf(vt + ls, 0)), m('GMV per output', (vt + ls) ? rp(g / (vt + ls)) : '–')] : [m('Output', 'tidak dicatat')]))));
+  });
+  box.append(pcards);
+  const ins = cmInsights(recs, cur, prev, f, rng);
+  if (ins.length) box.append(h('div', { class: 'card' }, h('h3', {}, 'Ringkasan otomatis'), h('ul', { class: 'tight' }, ins.map(x => h('li', {}, x)))));
+  box.append(cmKpiCard(role, cur, rng));
+  const byDate = {}; for (const r of recs) (byDate[r.date] ||= []).push(r);
+  const dates = Object.keys(byDate).sort().reverse();
+  const rows = dates.slice(0, 120).map(d => {
+    const x = cmAll(byDate[d]);
+    return h('tr', {}, td(fmtDate(d)), td(rp(x.g.tt), 'num'), td(rp(x.g.sp), 'num'), td(rp(x.g.lz), 'num'), td(h('b', {}, rp(x.gmv)), 'num'), td(nf(x.vtAll, 0), 'num'), td(nf(x.lsAll, 0), 'num'), td(nf(x.sold, 0), 'num'),
+      td(h('button', { class: 'sm noprint', onclick: () => { cmForm = null; state.ui[cmK('cmDate')] = d; save(); go('#/r/' + role.id + '/harian'); } }, 'Buka')));
+  });
+  box.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('h3', { style: 'margin:0' }, 'Rangkuman harian'), h('span', { class: 'muted small' }, dates.length + ' hari' + (dates.length > 120 ? ' (menampilkan 120 terbaru)' : '')), h('span', { class: 'sp' }),
+    h('button', { class: 'sm noprint', onclick: () => download('performa-' + role.id + '-' + rng.from + '_' + rng.to + '.csv', cmCsv(recs), 'text/csv') }, 'Ekspor CSV'), h('button', { class: 'sm noprint', onclick: () => window.print() }, 'Cetak')),
+    h('div', { style: 'margin-top:10px' }, tbl(['Tanggal', { t: 'TikTok', num: 1 }, { t: 'Shopee', num: 1 }, { t: 'Lazada', num: 1 }, { t: 'Total GMV', num: 1 }, { t: 'VT', num: 1 }, { t: 'LS', num: 1 }, { t: 'Product Sold', num: 1 }, ''], rows, { empty: 'Tidak ada data pada periode ini.' }))));
+  return box;
+}
+
+/* ----- input harian ----- */
+let cmForm = null;
+const cmBlank = (date, name) => ({ date, name: name || '' });
+function cmLoad(date, name) { const ex = state.cm.find(r => cmSame(r, date, name)); cmForm = ex ? clone(ex) : cmBlank(date, name); cmForm.rid = CMR.id; }
+function cmSave(next) {
+  const F = cmForm; if (!F.date) { toast('Isi tanggal dulu', 'err'); return; }
+  const keys = CMF.flatMap(g => g[1].map(x => x[0]));
+  if (!keys.some(k => F[k] != null)) { toast('Belum ada angka yang diisi', 'err'); return; }
+  const rec = { id: F.id || uid(), roleId: CMR.id, date: F.date, name: F.name || '', at: Date.now() };
+  keys.forEach(k => { if (F[k] != null) rec[k] = F[k]; });
+  const i = state.cm.findIndex(r => cmSame(r, rec.date, rec.name));
+  if (i >= 0) { rec.id = state.cm[i].id; state.cm[i] = rec; } else state.cm.push(rec);
+  F.id = rec.id; state.ui[cmK('cm')] = null; save();
+  if (next) { cmLoad(iso(addDays(pd(F.date), 1)), F.name); state.ui[cmK('cmDate')] = cmForm.date; }
+  toast('Tersimpan: ' + fmtDate(rec.date) + (next ? ' · lanjut ke ' + fmtDate(cmForm.date) : '')); rerender();
+}
+function pageCmInput(role) {
+  CMR = role; const box = h('div');
+  if (cmForm && cmForm.rid !== role.id) cmForm = null;
+  if (!cmForm) cmLoad(state.ui[cmK('cmDate')] || today(), '');
+  const F = cmForm, exists = state.cm.some(r => cmSame(r, F.date, F.name));
+  box.append(h('div', { class: 'note info' }, 'Form ini mengikuti kolom sheet InputGMV (Affiliate GMV per platform, Jumlah VT/LS, Product Sold By Creator). Total, Week, Periode, dan Tahun dihitung otomatis. Tanggal yang sudah ada akan dimuat dan diperbarui, bukan digandakan.'));
+  const grand = h('div', { class: 'calcrow' });
+  const upd = () => { const x = cmOne(F); grand.innerHTML = ''; grand.append(h('span', {}, 'Total Affiliate GMV: ', h('b', {}, rp(x.gmv))), h('span', {}, 'Total Jumlah VT + LS: ', h('b', {}, nf(x.out, 0))), h('span', {}, 'GMV per output: ', h('b', {}, rp(x.gpo)))); };
+  const dt = new Date(F.date + 'T00:00:00');
+  box.append(h('div', { class: 'card' }, h('div', { class: 'row', style: 'gap:14px;align-items:flex-end' },
+    field('Tanggal', h('input', { type: 'date', value: F.date, onchange: e => { if (!e.target.value) return; cmLoad(e.target.value, F.name); state.ui[cmK('cmDate')] = e.target.value; save(); rerender(); } })),
+    field('Creator Executive (opsional)', empSelect(role.id, F.name, { onchange: e => { cmLoad(F.date, e.target.value); rerender(); } })),
+    h('div', { class: 'row small muted' }, badge(isNaN(dt) ? '–' : MONTHS[dt.getMonth()], 'mute'), badge('Week ' + weekOf(F.date), 'mute'), badge(String(F.date.slice(0, 4)), 'mute'), badge(exists ? 'Data tanggal ini sudah ada – akan diperbarui' : 'Data baru', exists ? 'warn' : 'ok')),
+    h('span', { class: 'sp' }), h('button', { class: 'sm', onclick: () => { cmForm = cmBlank(F.date, F.name); cmForm.rid = role.id; rerender(); } }, 'Kosongkan form')), grand));
+  for (const [title, fields] of CMF) {
+    const g = h('div', { class: 'grid g3' });
+    for (const [k, label, kind] of fields) g.append(field(label + (kind === 'rp' ? ' (Rp)' : ''), h('input', { type: 'number', step: 1, min: 0, inputmode: 'decimal', value: F[k] == null ? '' : F[k], placeholder: kind === 'rp' ? '0' : '', oninput: e => { F[k] = num(e.target.value); upd(); } })));
+    box.append(h('div', { class: 'card aeplat', style: '--c:var(--brand)' }, h('h3', {}, title), g));
+  }
+  upd();
+  box.append(h('div', { class: 'row', style: 'margin-bottom:16px' }, h('button', { class: 'primary', onclick: () => cmSave(false) }, exists ? 'Perbarui data' : 'Simpan data'), h('button', { onclick: () => cmSave(true) }, 'Simpan & lanjut hari berikutnya'),
+    exists && isBoss() ? h('button', { class: 'danger', onclick: () => { if (confirm('Hapus data tanggal ' + fmtDate(F.date) + '?')) { state.cm = state.cm.filter(r => !cmSame(r, F.date, F.name)); state.ui[cmK('cm')] = null; save(); cmForm = cmBlank(F.date, F.name); cmForm.rid = role.id; toast('Data dihapus'); rerender(); } } }, 'Hapus data tanggal ini') : null,
+    h('a', { class: 'btnlike', href: '#/r/' + role.id + '/dash' }, 'Lihat dashboard →')));
+  const ym = state.ui[cmK('cmListMonth')] || F.date.slice(0, 7), list = cmList().filter(r => r.date.slice(0, 7) === ym).sort((a, b) => a.date < b.date ? 1 : -1);
+  const rows = list.map(r => { const x = cmOne(r); return h('tr', {}, td(fmtDate(r.date)), td(r.name || '–'), td(rp(x.g.tt), 'num'), td(rp(x.g.sp), 'num'), td(rp(x.g.lz), 'num'), td(h('b', {}, rp(x.gmv)), 'num'), td(nf(x.vtAll, 0), 'num'), td(nf(x.lsAll, 0), 'num'),
+    td(h('div', { class: 'row noprint', style: 'gap:6px' }, h('button', { class: 'sm', onclick: () => { cmLoad(r.date, r.name); state.ui[cmK('cmDate')] = r.date; save(); rerender(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }, 'Edit'),
+      isBoss() ? h('button', { class: 'sm danger', onclick: () => { if (confirm('Hapus data ' + fmtDate(r.date) + '?')) { state.cm = state.cm.filter(z => z.id !== r.id); state.ui[cmK('cm')] = null; save(); rerender(); } } }, 'Hapus') : null))); });
+  box.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('h3', { style: 'margin:0' }, 'Data harian tersimpan'), h('input', { type: 'month', value: ym, onchange: e => { state.ui[cmK('cmListMonth')] = e.target.value; save(); rerender(); } }), h('span', { class: 'muted small' }, list.length + ' hari')),
+    h('div', { style: 'margin-top:10px' }, tbl(['Tanggal', 'CE', { t: 'Aff. TikTok', num: 1 }, { t: 'Aff. Shopee', num: 1 }, { t: 'Aff. Lazada', num: 1 }, { t: 'Total GMV', num: 1 }, { t: 'VT', num: 1 }, { t: 'LS', num: 1 }, ''], rows, { empty: 'Belum ada data pada bulan ini.' }))));
+  const fileI = h('input', { type: 'file', accept: '.csv,text/csv', style: 'display:none', onchange: e => { const fl = e.target.files[0]; if (!fl) return; fl.text().then(t => { const r = cmImport(t); if (!r.n) toast('Tidak ada baris tanggal yang valid di file ini', 'err'); else { toast(r.n + ' hari diimpor (' + r.add + ' baru, ' + r.upd + ' diperbarui)'); rerender(); } }); e.target.value = ''; } });
+  box.append(h('div', { class: 'card' }, h('h3', {}, 'Impor dari InputGMV (CSV)'), h('p', { class: 'muted small' }, 'Di Google Sheets: buka tab InputGMV → File → Download → Comma-separated values (.csv). Lalu pilih file itu di sini. Urutan kolom harus sama dengan sheet (A=Tanggal, B–D=Affiliate GMV TikTok/Shopee/Lazada, E=Total, F–G=VT/LS TikTok, H=Product Sold By Creator, I–J=VT/LS Shopee). Baris tanpa angka (semua Rp0) dilewati. Tanggal yang sudah ada diperbarui; kolom hasil hitung diabaikan karena dihitung ulang.'),
+    h('div', { class: 'row' }, h('button', { onclick: () => fileI.click() }, 'Pilih file CSV…'), fileI, h('button', { class: 'sm', onclick: () => { cmDemo(); toast('Data contoh 45 hari dimuat'); rerender(); } }, 'Isi data contoh'),
+      cmList().length ? h('button', { class: 'sm', onclick: () => download('data-harian-' + role.id + '.csv', cmCsv(cmList()), 'text/csv') }, 'Ekspor semua (CSV)') : null)));
+  return box;
+}
+const MON = { jan: 1, feb: 2, mar: 3, apr: 4, mei: 5, may: 5, jun: 6, jul: 7, agu: 8, agt: 8, aug: 8, sep: 9, okt: 10, oct: 10, nov: 11, des: 12, dec: 12 };
+function cmImport(text) {
+  const { rows, delim } = parseCSV(text.replace(/^﻿/, '')), idn = delim === ';';
+  const pn = s => { if (s == null) return null; s = String(s).trim(); if (!s) return null; s = idn ? s.replace(/\./g, '').replace(',', '.') : s; const v = parseFloat(s.replace(/[^0-9.\-]/g, '')); return isNaN(v) ? null : v; };
+  const pdt = s => {
+    s = String(s || '').trim(); let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`;
+    m = s.match(/^(\d{1,2})\s+([A-Za-z]{3,})\.?\s+(\d{4})$/); if (m) { const mo = MON[m[2].slice(0, 3).toLowerCase()]; return mo ? `${m[3]}-${pad(mo)}-${pad(+m[1])}` : null; }
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if (!m) return null; let mo = +m[1], dy = +m[2]; if (idn || mo > 12) [mo, dy] = [dy, mo];
+    return (mo >= 1 && mo <= 12 && dy >= 1 && dy <= 31) ? `${m[3]}-${pad(mo)}-${pad(dy)}` : null;
+  };
+  const MAP = { affTT: 1, affSP: 2, affLZ: 3, vtTT: 5, lsTT: 6, sold: 7, vtSP: 8, lsSP: 9 };
+  let add = 0, upd = 0;
+  for (const r of rows) {
+    const date = pdt(r[0]); if (!date) continue;
+    const rec = { id: uid(), roleId: CMR.id, date, name: '', at: Date.now() }; let sum = 0;
+    for (const [k, ix] of Object.entries(MAP)) { const v = pn(r[ix]); if (v != null) { rec[k] = v; sum += Math.abs(v); } }
+    if (!sum) continue;
+    const i = state.cm.findIndex(x => cmSame(x, date, ''));
+    if (i >= 0) { rec.id = state.cm[i].id; state.cm[i] = rec; upd++; } else { state.cm.push(rec); add++; }
+  }
+  if (add + upd) { cmReset(); save(); }
+  return { n: add + upd, add, upd };
+}
+function cmDemo() {
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const end = new Date(), has = new Set(cmList().map(r => r.date));
+  for (let i = 44; i >= 0; i--) {
+    const date = iso(addDays(end, -i)); if (has.has(date)) continue;
+    const w = (0.85 + rnd() * 0.4) * (i % 12 === 0 ? 1.8 : 1);
+    state.cm.push({ id: uid(), roleId: CMR.id, date, name: '', affTT: Math.round(3.5e8 * w), affSP: Math.round(3.5e7 * w), affLZ: Math.round(rnd() < 0.3 ? 3e5 * w : 0), vtTT: Math.round(4000 * w), lsTT: Math.round(1000 * w), sold: Math.round(8000 * w), vtSP: Math.round(60 * w), lsSP: Math.round(12 * w), at: Date.now() });
+  }
+  cmReset(); save();
 }
 
 /* ---------- halaman peran ---------- */
@@ -741,13 +1347,13 @@ const TABS = {
 };
 function pageRole(role, tab) {
   const box = h('div');
-  paramHook = null; const tabs = TABS[role.type];
+  paramHook = null; const tabs = tabsOf(role);
   if (!tabs.some(t => t[0] === tab)) tab = tabs[0][0];
   box.append(h('div', { class: 'row', style: 'margin-bottom:4px' }, badge('Bonus maks. ' + role.cfg.max_bonus_txt, 'mute'), h('span', { class: 'muted small' }, role.cfg.purpose.slice(0, 150) + (role.cfg.purpose.length > 150 ? '…' : ''))));
   box.append(h('div', { class: 'tabs noprint' }, tabs.map(t => h('a', { href: `#/r/${role.id}/${t[0]}`, class: t[0] === tab ? 'on' : '' }, t[1]))));
   const fn = { generic: { panduan: pagePanduan, param: pageParam, metrik: pageMetrik, deliv: pageDeliv, rekap: pageRekap, score: pageScore, tren: pageTren, kontrol: pageKontrol },
     osd: { panduan: pagePanduan, param: pageOsdParam, input: pageOsdInput, hasil: pageOsdHasil },
-    hostlive: { panduan: pagePanduan, param: pageHlParam, sesi: pageHlSesi, check: pageHlCheck, coach: pageHlCoach, rekap: pageHlRekap } }[role.type][tab];
+    hostlive: { panduan: pagePanduan, param: pageHlParam, sesi: pageHlSesi, check: pageHlCheck, coach: pageHlCoach, rekap: pageHlRekap } }[role.type][tab] || AE_PAGES[tab];
   box.append(fn(role));
   return box;
 }
